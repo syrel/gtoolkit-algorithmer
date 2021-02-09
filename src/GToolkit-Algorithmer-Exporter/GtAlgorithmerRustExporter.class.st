@@ -38,9 +38,75 @@ GtAlgorithmerRustExporter >> printDepthIndentationOn: aStream [
 	depth timesRepeat: [ aStream nextPutAll: indentation ]
 ]
 
+{ #category : #private }
+GtAlgorithmerRustExporter >> rustifyMethodName: aMethodName [
+	^ String streamContents: [ :aStream |
+		((aMethodName trimRight: [ :c | c = $: ])
+			copyReplaceAll: ':' with: '_') gtPiecesCutWhereCamelCase
+				do: [ :eachPiece | aStream nextPutAll: eachPiece asLowercase ]
+				separatedBy: [ aStream nextPut: $_ ] ]
+]
+
 { #category : #visiting }
 GtAlgorithmerRustExporter >> visitAssignVariableBlock: anAssignVariableBlock [
 	^ anAssignVariableBlock name, ' = { ', (anAssignVariableBlock valueBlock accept: self), ' }'
+]
+
+{ #category : #'visiting - types' }
+GtAlgorithmerRustExporter >> visitBooleanType: aVoidType [
+	^ 'bool'
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerRustExporter >> visitClass: anAlgorithmerClass [
+	^ String streamContents: [ :aStream |
+		aStream
+			nextPutAll: (anAlgorithmerClass structure accept: self);
+			cr;
+			cr.
+		
+		anAlgorithmerClass implementations
+			do: [ :eachImplementation |
+				aStream nextPutAll: (eachImplementation accept: self) ]
+			separatedBy: [ aStream cr; cr ] ]
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerRustExporter >> visitClassImplementation: anImplemenation [
+	^ String streamContents: [ :aStream |
+		aStream
+			nextPutAll: '///';
+			space;
+			nextPutAll: anImplemenation label;
+			cr;
+			nextPutAll: 'impl';
+			space;
+			nextPutAll: anImplemenation algorithmerClass name;
+			space;
+			nextPut: ${;
+			cr.
+
+		self increaseDepth.
+		self printDepthIndentationOn: aStream.
+		
+		anImplemenation methods
+			do: [ :eachMethod |
+				aStream nextPutAll: (eachMethod accept: self)
+			] separatedBy: [
+				aStream cr.
+				self printDepthIndentationOn: aStream ].
+		
+		self decreaseDepth.
+		aStream
+			cr.
+			
+		self printDepthIndentationOn: aStream.
+		aStream nextPut: $} ]
+]
+
+{ #category : #'visiting - types' }
+GtAlgorithmerRustExporter >> visitClassType: aClassType [
+	^ 'Rc<RefCell<{1}>>' format: { aClassType name }
 ]
 
 { #category : #visiting }
@@ -99,21 +165,21 @@ GtAlgorithmerRustExporter >> visitIfBlock: anIfBlock [
 { #category : #visiting }
 GtAlgorithmerRustExporter >> visitMessageSendBlock: aMessageSendBlock [
 	^ String streamContents: [ :aStream |
-		aStream nextPutAll: aMessageSendBlock receiverName.
+		aStream nextPutAll: (aMessageSendBlock receiverBlock accept: self).
 		(binary includes: aMessageSendBlock selector)
 			ifTrue: [
 				aStream
 					space;
 					nextPutAll: aMessageSendBlock selector;
 					space;
-					nextPutAll: aMessageSendBlock argumentNames first ]
+					nextPutAll: (aMessageSendBlock argumentBlocks first accept: self) ]
 			ifFalse: [
 				aStream
 					nextPut: $.;
-					nextPutAll: aMessageSendBlock selector;
+					nextPutAll: (self rustifyMethodName: aMessageSendBlock selector);
 					nextPut: $(.
-				aMessageSendBlock argumentNames
-					do: [ :eachArgumentName | aStream nextPutAll: eachArgumentName ]
+				aMessageSendBlock argumentBlocks
+					do: [ :eachArgument | aStream nextPutAll: (eachArgument accept: self) ]
 					separatedBy: [ aStream nextPut: $,; space ].
 				aStream nextPut: $) ] ]
 ]
@@ -165,9 +231,266 @@ GtAlgorithmerRustExporter >> visitSequenceBlock: aSequenceBlock [
 		] separatedBy: [ aStream nextPut: $;; cr ] ]
 ]
 
+{ #category : #'visiting - composition' }
+GtAlgorithmerRustExporter >> visitStructure: anAlgorithmerStructure [
+	^ String streamContents: [ :aStream |
+		aStream nextPutAll: (self visitStructureHeader: anAlgorithmerStructure).
+		
+		aStream cr; cr.
+		
+		aStream nextPutAll: (self visitStructureConstructor: anAlgorithmerStructure) ]
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerRustExporter >> visitStructureConstructor: anAlgorithmerStructure [
+	^ String streamContents: [ :aStream |
+		self printDepthIndentationOn: aStream.
+		aStream
+			nextPutAll: 'impl';
+			space;
+			nextPutAll: 'InstanceConstructor';
+			space;
+			nextPutAll: 'for';
+			space;
+			nextPutAll: anAlgorithmerStructure name;
+			space;
+			nextPut: ${;
+			cr.
+			
+		self increaseDepth.
+		
+		self printDepthIndentationOn: aStream.
+		
+		aStream
+			nextPutAll: 'fn new() -> Self {';
+			cr.
+		
+		self increaseDepth.
+		self printDepthIndentationOn: aStream.
+		
+		aStream
+			nextPutAll: 'Self {';
+			cr.
+			
+		self increaseDepth.
+		
+		anAlgorithmerStructure fields do: [ :eachField |
+			self printDepthIndentationOn: aStream.
+			aStream
+				nextPutAll: eachField name;
+				nextPut: $:;
+				space.
+				
+			eachField defaultValueBlock
+				ifNil: [ aStream nextPutAll: 'None' ]
+				ifNotNil: [ :aDefaultBlock | aStream nextPutAll: (aDefaultBlock accept: self)  ]
+			
+		] separatedBy: [ aStream nextPut: $, ;cr ].
+			
+		self decreaseDepth.
+		
+		aStream cr.
+		self printDepthIndentationOn: aStream.
+		aStream nextPut: $}.
+		
+		self decreaseDepth.
+		
+		aStream cr.
+		self printDepthIndentationOn: aStream.
+		aStream nextPut: $}.
+		
+		self decreaseDepth.
+		
+		aStream
+			cr.
+		
+		self printDepthIndentationOn: aStream.
+		
+		aStream nextPut: $} ]
+	
+"impl InstanceConstructor for OffsetLayer {
+    fn new() -> Self {
+        Self {
+            layers: vec![],
+            offset: Point::new(0.0, 0.0),
+        }
+    }
+}"
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerRustExporter >> visitStructureField: anAlgorithmerStructureField [
+	^ String streamContents: [ :aStream |
+		aStream
+			nextPutAll: 'pub';
+			space;
+			nextPutAll: anAlgorithmerStructureField name;
+			nextPut: $:;
+			space.
+
+		anAlgorithmerStructureField defaultValueBlock
+			ifNil: [
+				aStream
+					nextPutAll: 'Option';
+					nextPut: $< ].
+
+		aStream
+			nextPutAll: (anAlgorithmerStructureField type accept: self).
+
+		anAlgorithmerStructureField defaultValueBlock
+			ifNil: [ aStream nextPut: $> ] ]
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerRustExporter >> visitStructureHeader: anAlgorithmerStructure [
+	^ String streamContents: [ :aStream |
+		self printDepthIndentationOn: aStream.
+		aStream
+			nextPutAll: 'pub';
+			space;
+			nextPutAll: 'struct';
+			space;
+			nextPutAll: anAlgorithmerStructure name;
+			space;
+			nextPut: ${;
+			cr.
+			
+		self increaseDepth.
+		
+		anAlgorithmerStructure fields do: [ :eachField |
+			self printDepthIndentationOn: aStream.
+			aStream nextPutAll: (eachField accept: self)
+		] separatedBy: [ aStream nextPut: $,; cr ].
+		self decreaseDepth.
+		
+		aStream
+			cr.
+		
+		self printDepthIndentationOn: aStream.
+		
+		aStream nextPut: $} ]
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerRustExporter >> visitTrait: anAlgorithmerTrait [
+	^ String streamContents: [ :aStream |
+		aStream
+			nextPutAll: 'pub trait';
+			space;
+			nextPutAll: anAlgorithmerTrait name;
+			space;
+			nextPut: ${;
+			cr.
+
+		self increaseDepth.
+		self printDepthIndentationOn: aStream.
+		
+		anAlgorithmerTrait methods
+			do: [ :eachMethod |
+				aStream nextPutAll: (eachMethod accept: self)
+			] separatedBy: [
+				aStream cr.
+				self printDepthIndentationOn: aStream ].
+		
+		self decreaseDepth.
+		aStream
+			cr.
+			
+		self printDepthIndentationOn: aStream.
+		aStream nextPut: $} ]
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerRustExporter >> visitTraitImplementation: aTraitImplemenation [
+	^ String streamContents: [ :aStream |
+		aStream
+			nextPutAll: 'impl';
+			space;
+			nextPutAll: aTraitImplemenation trait name;
+			space;
+			nextPutAll: 'for';
+			space;
+			nextPutAll: aTraitImplemenation algorithmerClass name;
+			nextPut: ${;
+			cr.
+
+		self increaseDepth.
+		self printDepthIndentationOn: aStream.
+		
+		aTraitImplemenation methods
+			do: [ :eachMethod |
+				aStream nextPutAll: (eachMethod accept: self)
+			] separatedBy: [
+				aStream cr.
+				self printDepthIndentationOn: aStream ].
+		
+		self decreaseDepth.
+		aStream
+			cr.
+			
+		self printDepthIndentationOn: aStream.
+		aStream nextPut: $} ]
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerRustExporter >> visitTraitMethod: anAlgorithmerMethod [
+	^ String streamContents: [ :aStream |
+		aStream
+			nextPutAll: 'fn';
+			space;
+			nextPutAll: (self rustifyMethodName: anAlgorithmerMethod name);
+			nextPut: $(;
+			nextPutAll: '&mut self';
+			nextPut: $).
+			
+		anAlgorithmerMethod hasReturn
+			ifTrue: [
+				aStream
+					space;
+					nextPutAll: '->';
+					space;
+					nextPutAll: (anAlgorithmerMethod return accept: self) ].
+
+		anAlgorithmerMethod body
+			ifNotNil: [ :aBody |
+				aStream
+					space;
+					nextPut: ${;
+					cr.
+
+				self increaseDepth.
+				self printDepthIndentationOn: aStream.
+				aStream nextPutAll: (anAlgorithmerMethod body accept: self).
+				
+				anAlgorithmerMethod hasReturn
+					ifFalse: [ aStream nextPut: $; ].
+				
+				self decreaseDepth.
+				aStream
+					cr.
+				self printDepthIndentationOn: aStream.
+				aStream nextPut: $} ]
+			ifNil: [ aStream nextPut: $; ] ]
+]
+
+{ #category : #'visiting - types' }
+GtAlgorithmerRustExporter >> visitTraitType: aTraitType [
+	^ 'Rc<RefCell<dyn {1}>>' format: { aTraitType name }
+]
+
+{ #category : #'visiting - types' }
+GtAlgorithmerRustExporter >> visitUnknownType: anUnknownType [
+	^ 'unknown'
+]
+
 { #category : #visiting }
 GtAlgorithmerRustExporter >> visitVariableBlock: aVariableBlock [
 	^ aVariableBlock name
+]
+
+{ #category : #'visiting - types' }
+GtAlgorithmerRustExporter >> visitVoidType: aVoidType [
+	^ ''
 ]
 
 { #category : #visiting }

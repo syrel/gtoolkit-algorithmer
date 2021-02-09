@@ -23,8 +23,12 @@ GtAlgorithmerSequenceBlock >> blocks [
 ]
 
 { #category : #accessing }
-GtAlgorithmerSequenceBlock >> blocks: anObject [
-	blocks := anObject
+GtAlgorithmerSequenceBlock >> blocks: aCollectionOfBlocks [
+	self
+		assert: [ aCollectionOfBlocks allSatisfy: [ :each | each isKindOf: GtAlgorithmerBlock ] ]
+		description: [ 'All blocks must be algorithmer blocks' ].
+
+	blocks := aCollectionOfBlocks
 ]
 
 { #category : #initialization }

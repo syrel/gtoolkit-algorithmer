@@ -12,6 +12,10 @@ GtAlgorithmerBlockVisitor >> visitAlgorithmer: anAlgorithmer [
 GtAlgorithmerBlockVisitor >> visitAssignVariableBlock: anAssignVariableBlock [
 ]
 
+{ #category : #'visiting - types' }
+GtAlgorithmerBlockVisitor >> visitBooleanType: aBooleanType [
+]
+
 { #category : #visiting }
 GtAlgorithmerBlockVisitor >> visitDefineVariableBlock: aDefineVariableBlock [
 ]
@@ -40,8 +44,36 @@ GtAlgorithmerBlockVisitor >> visitPushHeapBlock: aPushHeapBlock [
 GtAlgorithmerBlockVisitor >> visitSequenceBlock: aSequenceBlock [
 ]
 
+{ #category : #'visiting - composition' }
+GtAlgorithmerBlockVisitor >> visitStructure: anAlgorithmerStructure [
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerBlockVisitor >> visitStructureField: anAlgorithmerStructureField [
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerBlockVisitor >> visitTrait: anAlgorithmerTrait [
+]
+
+{ #category : #'visiting - composition' }
+GtAlgorithmerBlockVisitor >> visitTraitMethod: anAlgorithmerMethod [
+]
+
+{ #category : #'visiting - types' }
+GtAlgorithmerBlockVisitor >> visitTraitType: aTraitType [
+]
+
+{ #category : #'visiting - types' }
+GtAlgorithmerBlockVisitor >> visitUnknownType: anUnknownType [
+]
+
 { #category : #visiting }
 GtAlgorithmerBlockVisitor >> visitVariableBlock: aVariableBlock [
+]
+
+{ #category : #'visiting - types' }
+GtAlgorithmerBlockVisitor >> visitVoidType: aVoidType [
 ]
 
 { #category : #visiting }

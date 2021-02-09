@@ -3,9 +3,9 @@ Class {
 	#superclass : #GtAlgorithmerCompositeBlock,
 	#instVars : [
 		'blocks',
-		'receiver',
+		'receiverBlock',
 		'selector',
-		'arguments'
+		'argumentBlocks'
 	],
 	#category : #'GToolkit-Algorithmer-Core'
 }
@@ -16,36 +16,13 @@ GtAlgorithmerMessageSendBlock >> accept: aVisitor [
 ]
 
 { #category : #accessing }
-GtAlgorithmerMessageSendBlock >> argumentNames [
-	^ arguments
+GtAlgorithmerMessageSendBlock >> argumentBlocks [
+	^ argumentBlocks
 ]
 
 { #category : #'api - block' }
 GtAlgorithmerMessageSendBlock >> blockName [
-	^ String streamContents: [ :aStream |
-		| aNumArgs |
-
-		aStream nextPutAll: receiver.
-
-		aNumArgs := selector numArgs.
-		aNumArgs isZero
-			ifTrue: [ aStream space; nextPutAll: selector trimmed ]
-			ifFalse: [
-				(aNumArgs = 1 and: [ selector isBinary ])
-					ifTrue: [
-						aStream
-							space;
-							nextPutAll: selector trimmed;
-							space;
-							nextPutAll: arguments first trimmed ]
-					ifFalse: [
-						(selector splitOn: ':') withIndexDo: [ :eachPart  :anIndex |
-							aStream
-								space;
-								nextPutAll: eachPart trimmed;
-								nextPut: $:;
-								space;
-								nextPutAll: (arguments at: anIndex) trimmed ] ] ] ]
+	^ self receiverBlock blockName, ' ', self selector
 ]
 
 { #category : #accessing }
@@ -58,50 +35,49 @@ GtAlgorithmerMessageSendBlock >> initialize [
 	super initialize
 ]
 
-{ #category : #accessing }
-GtAlgorithmerMessageSendBlock >> receiver [
-	^ receiver
-]
-
 { #category : #initialization }
-GtAlgorithmerMessageSendBlock >> receiver: aReceiverName selector: aSelectorName [
+GtAlgorithmerMessageSendBlock >> receiver: aReceiverBlock selector: aSelectorName [
 	self
-		receiver: aReceiverName
+		receiver: aReceiverBlock
 		selector: aSelectorName arguments: #()
 ]
 
 { #category : #initialization }
-GtAlgorithmerMessageSendBlock >> receiver: aReceiverName selector: aSelectorName argument: anArgumentName [
+GtAlgorithmerMessageSendBlock >> receiver: aReceiverBlock selector: aSelectorName argument: anArgumentBlock [
 	self
-		receiver: aReceiverName
+		receiver: aReceiverBlock
 		selector: aSelectorName
-		arguments: { anArgumentName }
+		arguments: { anArgumentBlock }
 ]
 
 { #category : #initialization }
-GtAlgorithmerMessageSendBlock >> receiver: aReceiverName selector: aSelectorName arguments: theArgumentNames [
+GtAlgorithmerMessageSendBlock >> receiver: aReceiverBlock selector: aSelectorName arguments: theArgumentBlocks [
 	self
-		assert: [ theArgumentNames isString not ]
-		description: [ 'Must be a collection of variable names' ].
+		assert: [ theArgumentBlocks isString not ]
+		description: [ 'Must be a collection of variable blocks' ].
 
-	receiver := aReceiverName asSymbol.
+	self
+		assert: [ aReceiverBlock isKindOf: GtAlgorithmerBlock ]
+		description: [ 'Receiver must be a block' ].
+
+	self
+		assert: [ theArgumentBlocks allSatisfy: [ :eachArgument | eachArgument isKindOf: GtAlgorithmerBlock ] ]
+		description: [ 'All arguments must be blocks' ].
+
+	receiverBlock := aReceiverBlock.
 	selector := aSelectorName asSymbol.
-	arguments := theArgumentNames.
+	argumentBlocks := theArgumentBlocks.
 
 	blocks := Array streamContents: [ :aStream |
-		theArgumentNames do: [ :eachArgumentName |
-			aStream nextPut: (GtAlgorithmerReadVariableBlock new name: eachArgumentName) ].
-		
+		aStream nextPutAll: theArgumentBlocks.
 		aStream nextPut: (GtAlgorithmerPushHeapBlock new object: selector).
-		aStream nextPut: (GtAlgorithmerReadVariableBlock new name: receiver).
+		aStream nextPut: receiverBlock.
 		aStream nextPut: GtAlgorithmerPerformBlock new ]
 ]
 
 { #category : #accessing }
-GtAlgorithmerMessageSendBlock >> receiverName [
-	<return: #String>
-
-	^ receiver
+GtAlgorithmerMessageSendBlock >> receiverBlock [
+	^ receiverBlock
 ]
 
 { #category : #accessing }
