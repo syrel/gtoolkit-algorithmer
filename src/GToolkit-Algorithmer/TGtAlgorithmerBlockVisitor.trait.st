@@ -4,6 +4,10 @@ Trait {
 }
 
 { #category : #'visiting - blocks' }
+TGtAlgorithmerBlockVisitor >> visitAssignStructureFieldBlock: anAssignStructureFieldBlock [
+]
+
+{ #category : #'visiting - blocks' }
 TGtAlgorithmerBlockVisitor >> visitAssignVariableBlock: anAssignVariableBlock [
 ]
 
@@ -32,11 +36,19 @@ TGtAlgorithmerBlockVisitor >> visitPushHeapBlock: aPushHeapBlock [
 ]
 
 { #category : #'visiting - blocks' }
-TGtAlgorithmerBlockVisitor >> visitSequenceBlock: aSequenceBlock [
+TGtAlgorithmerBlockVisitor >> visitReadMethodArgumentBlock: aReadMethodArgumentBlock [
 ]
 
 { #category : #'visiting - blocks' }
-TGtAlgorithmerBlockVisitor >> visitVariableBlock: aVariableBlock [
+TGtAlgorithmerBlockVisitor >> visitReadStructureFieldBlock: aReadStructureField [
+]
+
+{ #category : #'visiting - blocks' }
+TGtAlgorithmerBlockVisitor >> visitReadVariableBlock: aVariableBlock [
+]
+
+{ #category : #'visiting - blocks' }
+TGtAlgorithmerBlockVisitor >> visitSequenceBlock: aSequenceBlock [
 ]
 
 { #category : #'visiting - blocks' }

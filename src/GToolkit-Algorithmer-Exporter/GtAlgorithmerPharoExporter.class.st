@@ -65,6 +65,11 @@ GtAlgorithmerPharoExporter >> visitPushHeapBlock: aPushHeapBlock [
 ]
 
 { #category : #visiting }
+GtAlgorithmerPharoExporter >> visitReadVariableBlock: aVariableBlock [
+	^ RBTemporaryNode named: aVariableBlock name
+]
+
+{ #category : #visiting }
 GtAlgorithmerPharoExporter >> visitSequenceBlock: aSequenceBlock [
 	| theVariableDefinitions |
 	
@@ -75,11 +80,6 @@ GtAlgorithmerPharoExporter >> visitSequenceBlock: aSequenceBlock [
 		statements: (aSequenceBlock blocks
 			reject: [ :eachBlock | eachBlock isVariableDefineBlock ]
 			thenCollect: [ :eachBlock | eachBlock accept: self ])
-]
-
-{ #category : #visiting }
-GtAlgorithmerPharoExporter >> visitVariableBlock: aVariableBlock [
-	^ RBTemporaryNode named: aVariableBlock name
 ]
 
 { #category : #visiting }

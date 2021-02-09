@@ -18,6 +18,11 @@ GtAlgorithmerRustExporter >> decreaseDepth [
 ]
 
 { #category : #private }
+GtAlgorithmerRustExporter >> doesMethodMutateStructure: aMethod [
+	^ aMethod accept: GtAlgorithmerStructureMutabilityDetector new
+]
+
+{ #category : #private }
 GtAlgorithmerRustExporter >> increaseDepth [
 	depth := depth + 1
 ]
@@ -42,16 +47,31 @@ GtAlgorithmerRustExporter >> printDepthIndentationOn: aStream [
 
 { #category : #private }
 GtAlgorithmerRustExporter >> rustifyMethodName: aMethodName [
+	| rustifiedName |
+	
+	rustifiedName := aMethodName.
+	rustifiedName := rustifiedName trimRight: [ :c | c = $: ].
+	rustifiedName := rustifiedName copyReplaceAll: ':' with: '_'.
+	
+	(rustifiedName size > 1
+		and: [ rustifiedName last isUppercase
+			and: [ rustifiedName nextToLast isLowercase ] ])
+		ifTrue: [rustifiedName := rustifiedName allButLast, '_', rustifiedName last asLowercase asString ].
+	
 	^ String streamContents: [ :aStream |
-		((aMethodName trimRight: [ :c | c = $: ])
-			copyReplaceAll: ':' with: '_') gtPiecesCutWhereCamelCase
+			rustifiedName gtPiecesCutWhereCamelCase
 				do: [ :eachPiece | aStream nextPutAll: eachPiece asLowercase ]
 				separatedBy: [ aStream nextPut: $_ ] ]
 ]
 
 { #category : #'visiting - blocks' }
+GtAlgorithmerRustExporter >> visitAssignStructureFieldBlock: anAssignStructureFieldBlock [
+	^ 'self.', (self rustifyMethodName: anAssignStructureFieldBlock name), ' = { ', (anAssignStructureFieldBlock valueBlock accept: self), ' }'
+]
+
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitAssignVariableBlock: anAssignVariableBlock [
-	^ anAssignVariableBlock name, ' = { ', (anAssignVariableBlock valueBlock accept: self), ' }'
+	^ (self rustifyMethodName: anAssignVariableBlock name), ' = { ', (anAssignVariableBlock valueBlock accept: self), ' }'
 ]
 
 { #category : #'visiting - types' }
@@ -122,7 +142,7 @@ GtAlgorithmerRustExporter >> visitDefineVariableBlock: aDefineVariableBlock [
 			ifTrue: [ aStream nextPutAll: 'mut'; space ].
 			
 		aStream
-			nextPutAll: aDefineVariableBlock name.
+			nextPutAll: (self rustifyMethodName: aDefineVariableBlock name).
 			
 		aDefineVariableBlock type
 			ifNotNil: [
@@ -196,6 +216,65 @@ GtAlgorithmerRustExporter >> visitMessageSendBlock: aMessageSendBlock [
 				aStream nextPut: $) ] ]
 ]
 
+{ #category : #'visiting - composition' }
+GtAlgorithmerRustExporter >> visitMethod: anAlgorithmerMethod [
+	^ String streamContents: [ :aStream |
+		anAlgorithmerMethod isFromTrait
+			ifFalse: [ aStream nextPutAll: 'pub'; space ].
+		
+		aStream
+			nextPutAll: 'fn';
+			space;
+			nextPutAll: (self rustifyMethodName: anAlgorithmerMethod name);
+			nextPut: $(.
+
+		(self doesMethodMutateStructure: anAlgorithmerMethod)
+			ifTrue: [ aStream nextPutAll: '&mut self' ]
+			ifFalse: [ aStream nextPutAll: '&self' ].
+
+		anAlgorithmerMethod arguments
+			do: [ :eachArgument |
+				aStream
+					nextPut: $,;
+					space;
+					nextPutAll: (self rustifyMethodName: eachArgument name);
+					nextPut: $:;
+					space;
+					nextPutAll: (eachArgument type accept: self) ].
+			
+		aStream nextPut: $).
+		
+			
+		anAlgorithmerMethod hasReturn
+			ifTrue: [
+				aStream
+					space;
+					nextPutAll: '->';
+					space;
+					nextPutAll: (anAlgorithmerMethod returnType accept: self) ].
+
+		anAlgorithmerMethod body
+			ifNotNil: [ :aBody |
+				aStream
+					space;
+					nextPut: ${;
+					cr.
+
+				self increaseDepth.
+				self printDepthIndentationOn: aStream.
+				aStream nextPutAll: (anAlgorithmerMethod body accept: self).
+				
+				anAlgorithmerMethod hasReturn
+					ifFalse: [ aStream nextPut: $; ].
+				
+				self decreaseDepth.
+				aStream
+					cr.
+				self printDepthIndentationOn: aStream.
+				aStream nextPut: $} ]
+			ifNil: [ aStream nextPut: $; ] ]
+]
+
 { #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitOperatorBlock: anOperatorBlock [
 	^ String streamContents: [ :aStream |
@@ -230,6 +309,21 @@ GtAlgorithmerRustExporter >> visitPushHeapBlock: aPushHeapBlock [
 					nextPutAll: aPushHeapBlock object;
 					nextPut: $" ]
 			ifFalse: [ aStream print: aPushHeapBlock object ] ]
+]
+
+{ #category : #'visiting - blocks' }
+GtAlgorithmerRustExporter >> visitReadMethodArgumentBlock: aReadMethodArgumentBlock [
+	^ self rustifyMethodName: aReadMethodArgumentBlock name
+]
+
+{ #category : #'visiting - blocks' }
+GtAlgorithmerRustExporter >> visitReadStructureFieldBlock: aReadStructureField [
+	^ 'self.', (self rustifyMethodName: aReadStructureField name)
+]
+
+{ #category : #'visiting - blocks' }
+GtAlgorithmerRustExporter >> visitReadVariableBlock: aVariableBlock [
+	^ aVariableBlock name
 ]
 
 { #category : #'visiting - blocks' }
@@ -332,7 +426,7 @@ GtAlgorithmerRustExporter >> visitStructureField: anAlgorithmerStructureField [
 		aStream
 			nextPutAll: 'pub';
 			space;
-			nextPutAll: anAlgorithmerStructureField name;
+			nextPutAll: (self rustifyMethodName: anAlgorithmerStructureField name);
 			nextPut: $:;
 			space.
 
@@ -440,47 +534,6 @@ GtAlgorithmerRustExporter >> visitTraitImplementation: aTraitImplemenation [
 		aStream nextPut: $} ]
 ]
 
-{ #category : #'visiting - composition' }
-GtAlgorithmerRustExporter >> visitTraitMethod: anAlgorithmerMethod [
-	^ String streamContents: [ :aStream |
-		aStream
-			nextPutAll: 'fn';
-			space;
-			nextPutAll: (self rustifyMethodName: anAlgorithmerMethod name);
-			nextPut: $(;
-			nextPutAll: '&mut self';
-			nextPut: $).
-			
-		anAlgorithmerMethod hasReturn
-			ifTrue: [
-				aStream
-					space;
-					nextPutAll: '->';
-					space;
-					nextPutAll: (anAlgorithmerMethod return accept: self) ].
-
-		anAlgorithmerMethod body
-			ifNotNil: [ :aBody |
-				aStream
-					space;
-					nextPut: ${;
-					cr.
-
-				self increaseDepth.
-				self printDepthIndentationOn: aStream.
-				aStream nextPutAll: (anAlgorithmerMethod body accept: self).
-				
-				anAlgorithmerMethod hasReturn
-					ifFalse: [ aStream nextPut: $; ].
-				
-				self decreaseDepth.
-				aStream
-					cr.
-				self printDepthIndentationOn: aStream.
-				aStream nextPut: $} ]
-			ifNil: [ aStream nextPut: $; ] ]
-]
-
 { #category : #'visiting - types' }
 GtAlgorithmerRustExporter >> visitTraitType: aTraitType [
 	^ 'Rc<RefCell<dyn {1}>>' format: { aTraitType name }
@@ -489,11 +542,6 @@ GtAlgorithmerRustExporter >> visitTraitType: aTraitType [
 { #category : #'visiting - types' }
 GtAlgorithmerRustExporter >> visitUnknownType: anUnknownType [
 	^ 'unknown'
-]
-
-{ #category : #'visiting - blocks' }
-GtAlgorithmerRustExporter >> visitVariableBlock: aVariableBlock [
-	^ aVariableBlock name
 ]
 
 { #category : #'visiting - types' }

@@ -8,6 +8,10 @@ TGtAlgorithmerCompositionVisitor >> visitAlgorithmer: anAlgorithmer [
 ]
 
 { #category : #'visiting - composition' }
+TGtAlgorithmerCompositionVisitor >> visitMethod: anAlgorithmerMethod [
+]
+
+{ #category : #'visiting - composition' }
 TGtAlgorithmerCompositionVisitor >> visitStructure: anAlgorithmerStructure [
 ]
 
@@ -17,8 +21,4 @@ TGtAlgorithmerCompositionVisitor >> visitStructureField: anAlgorithmerStructureF
 
 { #category : #'visiting - composition' }
 TGtAlgorithmerCompositionVisitor >> visitTrait: anAlgorithmerTrait [
-]
-
-{ #category : #'visiting - composition' }
-TGtAlgorithmerCompositionVisitor >> visitTraitMethod: anAlgorithmerMethod [
 ]

@@ -53,6 +53,11 @@ GtAlgorithmerWhileBlock >> condition: anObject [
 	condition := anObject
 ]
 
+{ #category : #accessing }
+GtAlgorithmerWhileBlock >> conditionBlock [
+	^ condition
+]
+
 { #category : #initialization }
 GtAlgorithmerWhileBlock >> initialize [
 	super initialize.
@@ -68,6 +73,11 @@ GtAlgorithmerWhileBlock >> loop [
 { #category : #accessing }
 GtAlgorithmerWhileBlock >> loop: anObject [
 	loop := anObject
+]
+
+{ #category : #accessing }
+GtAlgorithmerWhileBlock >> loopBlock [
+	^ loop
 ]
 
 { #category : #'api - algorithmer' }

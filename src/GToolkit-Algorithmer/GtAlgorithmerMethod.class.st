@@ -4,14 +4,26 @@ Class {
 	#instVars : [
 		'name',
 		'body',
-		'returnType'
+		'returnType',
+		'arguments',
+		'isFromTrait'
 	],
 	#category : #'GToolkit-Algorithmer-Composition'
 }
 
 { #category : #visiting }
 GtAlgorithmerMethod >> accept: aVisitor [
-	^ aVisitor visitTraitMethod: self
+	^ aVisitor visitMethod: self
+]
+
+{ #category : #accessing }
+GtAlgorithmerMethod >> arguments [
+	^ arguments
+]
+
+{ #category : #accessing }
+GtAlgorithmerMethod >> arguments: anObject [
+	arguments := anObject
 ]
 
 { #category : #accessing }
@@ -35,7 +47,19 @@ GtAlgorithmerMethod >> hasReturn [
 GtAlgorithmerMethod >> initialize [
 	super initialize.
 
-	returnType := GtAlgorithmerVoidType new
+	returnType := GtAlgorithmerVoidType new.
+	arguments := #().
+	isFromTrait := false
+]
+
+{ #category : #accessing }
+GtAlgorithmerMethod >> isFromTrait [
+	^ isFromTrait
+]
+
+{ #category : #accessing }
+GtAlgorithmerMethod >> isFromTrait: anObject [
+	isFromTrait := anObject
 ]
 
 { #category : #accessing }

@@ -9,7 +9,7 @@ Class {
 
 { #category : #visiting }
 GtAlgorithmerReadVariableBlock >> accept: aVisitor [
-	^ aVisitor visitVariableBlock: self
+	^ aVisitor visitReadVariableBlock: self
 ]
 
 { #category : #'api - block' }

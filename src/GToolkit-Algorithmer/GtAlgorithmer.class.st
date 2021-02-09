@@ -4,6 +4,7 @@ Class {
 	#instVars : [
 		'announcer',
 		'blocksStack',
+		'contextStack',
 		'variables',
 		'heap',
 		'algorithm'
@@ -60,6 +61,9 @@ GtAlgorithmer >> initialize [
 	algorithm := nil.
 
 	blocksStack := Stack new.
+	contextStack := Stack new.
+	contextStack push: GtAlgorithmerContext new.
+
 	heap := Stack new.
 
 	variables := Stack new.

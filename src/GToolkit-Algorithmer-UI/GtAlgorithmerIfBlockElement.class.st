@@ -92,7 +92,7 @@ GtAlgorithmerIfBlockElement >> onTopBlockChanged [
 	aBackground := self algorithmerBlockViewModel isTopBlock
 		ifTrue: [ (Color yellow alpha: 0.2) gtOpaqueColorOnWhite ]
 		ifFalse: [ Color white ].
-		
+
 	self background: aBackground
 ]
 
