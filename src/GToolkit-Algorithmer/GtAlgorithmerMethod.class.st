@@ -3,8 +3,8 @@ Class {
 	#superclass : #Object,
 	#instVars : [
 		'name',
-		'return',
-		'body'
+		'body',
+		'returnType'
 	],
 	#category : #'GToolkit-Algorithmer-Composition'
 }
@@ -28,14 +28,14 @@ GtAlgorithmerMethod >> body: anObject [
 
 { #category : #testing }
 GtAlgorithmerMethod >> hasReturn [
-	^ return isVoid not
+	^ returnType isVoid not
 ]
 
 { #category : #initialization }
 GtAlgorithmerMethod >> initialize [
 	super initialize.
 
-	return := GtAlgorithmerVoidType new
+	returnType := GtAlgorithmerVoidType new
 ]
 
 { #category : #accessing }
@@ -46,16 +46,16 @@ GtAlgorithmerMethod >> name [
 ]
 
 { #category : #accessing }
-GtAlgorithmerMethod >> name: anObject [
-	name := anObject
+GtAlgorithmerMethod >> name: aMethodName [
+	name := aMethodName asSymbol
 ]
 
 { #category : #accessing }
-GtAlgorithmerMethod >> return [
-	^ return
+GtAlgorithmerMethod >> returnType [
+	^ returnType
 ]
 
 { #category : #accessing }
-GtAlgorithmerMethod >> return: anObject [
-	return := anObject
+GtAlgorithmerMethod >> returnType: aReturnType [
+	returnType := aReturnType
 ]

@@ -8,3 +8,8 @@ Class {
 GtAlgorithmerUnknownType >> accept: aVisitor [
 	^ aVisitor visitUnknownType: self
 ]
+
+{ #category : #testing }
+GtAlgorithmerUnknownType >> isUnknown [
+	^ true
+]

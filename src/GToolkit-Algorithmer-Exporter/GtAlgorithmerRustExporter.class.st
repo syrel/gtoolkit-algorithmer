@@ -1,6 +1,8 @@
 Class {
 	#name : #GtAlgorithmerRustExporter,
-	#superclass : #GtAlgorithmerBlockVisitor,
+	#superclass : #Object,
+	#traits : 'TGtAlgorithmerTypeVisitor + TGtAlgorithmerBlockVisitor + TGtAlgorithmerCompositionVisitor',
+	#classTraits : 'TGtAlgorithmerTypeVisitor classTrait + TGtAlgorithmerBlockVisitor classTrait + TGtAlgorithmerCompositionVisitor classTrait',
 	#instVars : [
 		'binary',
 		'indentation',
@@ -47,7 +49,7 @@ GtAlgorithmerRustExporter >> rustifyMethodName: aMethodName [
 				separatedBy: [ aStream nextPut: $_ ] ]
 ]
 
-{ #category : #visiting }
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitAssignVariableBlock: anAssignVariableBlock [
 	^ anAssignVariableBlock name, ' = { ', (anAssignVariableBlock valueBlock accept: self), ' }'
 ]
@@ -109,7 +111,7 @@ GtAlgorithmerRustExporter >> visitClassType: aClassType [
 	^ 'Rc<RefCell<{1}>>' format: { aClassType name }
 ]
 
-{ #category : #visiting }
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitDefineVariableBlock: aDefineVariableBlock [
 	^ String streamContents: [ :aStream |
 		aStream
@@ -130,7 +132,12 @@ GtAlgorithmerRustExporter >> visitDefineVariableBlock: aDefineVariableBlock [
 					nextPutAll: aDefineVariableBlock type asString  ] ]
 ]
 
-{ #category : #visiting }
+{ #category : #'visiting - types' }
+GtAlgorithmerRustExporter >> visitFloat32Type: aFloat32Type [
+	^ 'f32'
+]
+
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitIfBlock: anIfBlock [	
 	^ String streamContents: [ :aStream |
 		aStream
@@ -162,7 +169,12 @@ GtAlgorithmerRustExporter >> visitIfBlock: anIfBlock [
 				aStream nextPutAll: '}' ] ]
 ]
 
-{ #category : #visiting }
+{ #category : #'visiting - types' }
+GtAlgorithmerRustExporter >> visitInt32Type: anInt32Type [
+	^ 'i32'
+]
+
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitMessageSendBlock: aMessageSendBlock [
 	^ String streamContents: [ :aStream |
 		aStream nextPutAll: (aMessageSendBlock receiverBlock accept: self).
@@ -184,7 +196,7 @@ GtAlgorithmerRustExporter >> visitMessageSendBlock: aMessageSendBlock [
 				aStream nextPut: $) ] ]
 ]
 
-{ #category : #visiting }
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitOperatorBlock: anOperatorBlock [
 	^ String streamContents: [ :aStream |
 		aStream nextPutAll: (anOperatorBlock leftOperand accept: self).
@@ -199,7 +211,7 @@ GtAlgorithmerRustExporter >> visitOperatorBlock: anOperatorBlock [
 		aStream nextPutAll: (anOperatorBlock rightOperand accept: self) ].
 ]
 
-{ #category : #visiting }
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitPrintlnBlock: aPrintlnBlock [
 	^ String streamContents: [ :aStream |
 		aStream
@@ -208,7 +220,7 @@ GtAlgorithmerRustExporter >> visitPrintlnBlock: aPrintlnBlock [
 			nextPutAll: ')' ]
 ]
 
-{ #category : #visiting }
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitPushHeapBlock: aPushHeapBlock [
 	^ String streamContents: [ :aStream |
 		aPushHeapBlock object isString
@@ -220,7 +232,7 @@ GtAlgorithmerRustExporter >> visitPushHeapBlock: aPushHeapBlock [
 			ifFalse: [ aStream print: aPushHeapBlock object ] ]
 ]
 
-{ #category : #visiting }
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitSequenceBlock: aSequenceBlock [
 	^ String streamContents: [ :aStream |
 		aSequenceBlock blocks do: [ :each |
@@ -247,10 +259,6 @@ GtAlgorithmerRustExporter >> visitStructureConstructor: anAlgorithmerStructure [
 		self printDepthIndentationOn: aStream.
 		aStream
 			nextPutAll: 'impl';
-			space;
-			nextPutAll: 'InstanceConstructor';
-			space;
-			nextPutAll: 'for';
 			space;
 			nextPutAll: anAlgorithmerStructure name;
 			space;
@@ -281,7 +289,7 @@ GtAlgorithmerRustExporter >> visitStructureConstructor: anAlgorithmerStructure [
 				nextPut: $:;
 				space.
 				
-			eachField defaultValueBlock
+			eachField valueOrDefaultBlock
 				ifNil: [ aStream nextPutAll: 'None' ]
 				ifNotNil: [ :aDefaultBlock | aStream nextPutAll: (aDefaultBlock accept: self)  ]
 			
@@ -328,7 +336,7 @@ GtAlgorithmerRustExporter >> visitStructureField: anAlgorithmerStructureField [
 			nextPut: $:;
 			space.
 
-		anAlgorithmerStructureField defaultValueBlock
+		anAlgorithmerStructureField valueOrDefaultBlock
 			ifNil: [
 				aStream
 					nextPutAll: 'Option';
@@ -337,7 +345,7 @@ GtAlgorithmerRustExporter >> visitStructureField: anAlgorithmerStructureField [
 		aStream
 			nextPutAll: (anAlgorithmerStructureField type accept: self).
 
-		anAlgorithmerStructureField defaultValueBlock
+		anAlgorithmerStructureField valueOrDefaultBlock
 			ifNil: [ aStream nextPut: $> ] ]
 ]
 
@@ -483,7 +491,7 @@ GtAlgorithmerRustExporter >> visitUnknownType: anUnknownType [
 	^ 'unknown'
 ]
 
-{ #category : #visiting }
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitVariableBlock: aVariableBlock [
 	^ aVariableBlock name
 ]
@@ -493,7 +501,7 @@ GtAlgorithmerRustExporter >> visitVoidType: aVoidType [
 	^ ''
 ]
 
-{ #category : #visiting }
+{ #category : #'visiting - blocks' }
 GtAlgorithmerRustExporter >> visitWhileBlock: aWhileBlock [
 	^ String streamContents: [ :aStream |
 		aStream

@@ -4,7 +4,7 @@ Class {
 	#instVars : [
 		'name',
 		'type',
-		'defaultValueBlock'
+		'valueBlock'
 	],
 	#category : #'GToolkit-Algorithmer-Composition'
 }
@@ -14,14 +14,13 @@ GtAlgorithmerStructureField >> accept: aVisitor [
 	^ aVisitor visitStructureField: self
 ]
 
-{ #category : #accessing }
-GtAlgorithmerStructureField >> defaultValueBlock [
-	^ defaultValueBlock
-]
-
-{ #category : #accessing }
-GtAlgorithmerStructureField >> defaultValueBlock: anObject [
-	defaultValueBlock := anObject
+{ #category : #initialization }
+GtAlgorithmerStructureField >> initialize [
+	super initialize.
+	
+	name := ''.
+	type := GtAlgorithmerUnknownType new.
+	valueBlock := nil
 ]
 
 { #category : #accessing }
@@ -46,5 +45,19 @@ GtAlgorithmerStructureField >> type: anObject [
 
 { #category : #generated }
 GtAlgorithmerStructureField >> value: aValueBlock [
-	defaultValueBlock := aValueBlock
+	valueBlock := aValueBlock
+]
+
+{ #category : #accessing }
+GtAlgorithmerStructureField >> valueBlock [
+	<return: #GtAlgorithmerBlock or: nil>
+
+	^ valueBlock
+]
+
+{ #category : #accessing }
+GtAlgorithmerStructureField >> valueOrDefaultBlock [
+	<return: #GtAlgorithmerBlock or: nil>
+
+	^ valueBlock ifNil: [ self type defaultValueBlock ]
 ]

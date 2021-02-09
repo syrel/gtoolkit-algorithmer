@@ -13,21 +13,52 @@ GtAlgorithmerStructure >> accept: aVisitor [
 	^ aVisitor visitStructure: self
 ]
 
+{ #category : #'api - fields' }
+GtAlgorithmerStructure >> addField: aGtAlgorithmerStructureField [
+	fields add: aGtAlgorithmerStructureField
+]
+
+{ #category : #'api - fields' }
+GtAlgorithmerStructure >> addFieldName: aName [
+	self addField: (GtAlgorithmerStructureField new
+		name: aName)
+]
+
+{ #category : #'api - fields' }
+GtAlgorithmerStructure >> addFieldName: aName type: aType [
+	self addField: (GtAlgorithmerStructureField new
+		name: aName;
+		type: aType)
+]
+
+{ #category : #'api - fields' }
+GtAlgorithmerStructure >> addFieldName: aName type: aType value: aDefaultValueBlock [
+	self addField: (GtAlgorithmerStructureField new
+		name: aName;
+		type: aType;
+		value: aDefaultValueBlock)
+]
+
 { #category : #accessing }
 GtAlgorithmerStructure >> fields [
 	^ fields
 ]
 
-{ #category : #accessing }
+{ #category : #'api - fields' }
 GtAlgorithmerStructure >> fields: anObject [
-	fields := anObject
+	fields := anObject asOrderedCollection
+]
+
+{ #category : #testing }
+GtAlgorithmerStructure >> hasFields [
+	^ fields isNotEmpty
 ]
 
 { #category : #initialization }
 GtAlgorithmerStructure >> initialize [
 	super initialize.
 	
-	fields := #()
+	fields := OrderedCollection new
 ]
 
 { #category : #accessing }
